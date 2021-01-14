@@ -1,0 +1,32 @@
+setup code, etc...
+- create players
+- set the initial game/player state
+    - the game starts paused
+    - the key bindings are x1, x2, x3
+- set the window title
+
+start of infinite loop
+    a. update the frame.
+    b. listen for keyboard events.
+        - Define what to do on what events
+            - turn 90 deg left
+            - turn 90 deg right
+            - start/resume game
+            - pause game
+    c. update the game state.
+        if not paused.
+        d. move cursor(s) forward.
+            - must keep track of how far to move.
+            - must keep track of direction.
+        e. check for intersections.
+            if true, break out of loop
+                - Must know each x, y coordinate
+                of every 90 deg turn.
+                - Must know current x, y coordinate
+        f. check for out of bounds.
+            if true, break out of loop
+end of infinite loop
+
+tear down code, etc...
+    - print who won.
+    - ask if the user wants to play again

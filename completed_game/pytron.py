@@ -9,35 +9,26 @@
 #                                              #
 # ============================================ #
 
-from _typeshed import NoneType
-from pathlib import PurePath
-from os import chdir, terminal_size
-chdir(PurePath(__file__).parent)
-
 import turtle
 import importlib
 from tkinter import TclError
-from typing import List
 from math import floor
-
-
-# ================= type defs =================
-Vector = List[float]
+from itertools import zip_longest, chain
 
 
 # ================== classes ==================
 class Player():
     """Class that handles player state and turtle object"""
     # class wide variables
-    base_speed = 2.5
+    base_distance = 2.5
 
     # methods
-    def __init__(self):
+    def __init__(self, canvas=None):
         self.score = 0
-        self.speed = self.base_speed
-        self.cursor = turtle.Turtle()
-        self.cursor.speed(0)
-        self.cursor.degrees()
+        self.distance_per_loop = self.base_distance
+        self.cursor = turtle.RawTurtle(canvas=canvas) if canvas else turtle.Turtle()
+        self.cursor.speed(10)  # ensure the gui loop updates fast
+        self.cursor.degrees()  # set the turtle module to degrees
         self.x_vec, self.y_vec = [], []
 
     def get_pos(self):
@@ -49,6 +40,7 @@ class Player():
         return (round(x, 2), round(y, 2))
 
     def update_trace(self):
+        """Add the point to the trace"""
         x, y = self.get_pos()
         self.x_vec.append(x)
         self.y_vec.append(y)
@@ -75,25 +67,24 @@ class Player():
 
     def update_score(self):
         """Increments the score"""
-        self.score += self.speed
+        self.score += self.distance_per_loop
 
-    def update_speed(self):
+    def update_dist_per_loop(self):
         """Increments the speed"""
-        self.speed = self.base_speed*((floor(self.score/1000)*0.5) + 1)
+        self.distance_per_loop = self.base_distance*((floor(self.score/1000)*0.5) + 1)
 
     def move(self):
         """Moves the player in the current direction
         at the desired speed"""
-        self.cursor.forward(self.speed)
+        self.cursor.forward(self.distance_per_loop)
 
     def set_starting_pos(self, x=0, y=0):
         """Moves the player to the desired starting position
         with out drawing a line"""
-        self.x_vec.append(x)
-        self.y_vec.append(y)
-        self.cursor.penup()
-        self.cursor.setpos(x, y)
-        self.cursor.pendown()
+        self.cursor.penup()       # don't draw
+        self.cursor.setpos(x, y)  # go to point x, y
+        self.cursor.pendown()     # get ready to draw
+        self.update_trace()       # add x, y to the vectors
 
 
 class Game():
@@ -154,12 +145,27 @@ class Game():
                 except IndexError:
                     pass
 
+    def save_data(self):
+        """Writes out the player's x, y values
+        to a csv for debugging purposes"""
+        with open('log.csv', 'w') as f:
+            # write out the header
+            header = [f'player{i+1}_x,player{i+1}_y' for i, _ in enumerate(self.player_list)]
+            f.write(','.join(header))
+            f.write('\n')
+            # collect the player traces
+            traces = [p.get_trace() for p in self.player_list]
+            traces = list(chain(*traces))
+            # write out the player traces
+            [f.write(str(t)[1:-1]+'\n') for t in zip_longest(*traces)]
+
     def game_over(self):
         self.screen.bgcolor('red')
+        self.save_data()
         self.screen.exitonclick()
 
 
-def main():
+def game_loop():
     # ================= setup =================
     # set the title
     turtle.title("pytron")
@@ -188,12 +194,13 @@ def main():
 
     # =============== game loop ===============
     try:
+        # start the game
         while True:
             game.screen.update()
             if not game.paused:
                 # update player state
                 [p.update_score() for p in game.player_list]
-                [p.update_speed() for p in game.player_list]
+                [p.update_dist_per_loop() for p in game.player_list]
                 [p.move() for p in game.player_list]
                 # check to make sure no out of bounds
                 if game.border_collision_detected():
@@ -202,22 +209,29 @@ def main():
                 if game.line_intersection_detected():
                     print('line_intersection_detected')
                     break
-
         # end the game
         game.game_over()
         turtle.mainloop()
         del game
-
+    # handle window close
     except (TclError, turtle.Terminator):
         pass
 
 
-
-if __name__ == "__main__":
+def start_game_loop():
     while True:
-        main()
+        game_loop()
         i = str(input("play again [y, n]\n"))
         if i.lower() == 'n':
             break
         # if play again
         importlib.reload(turtle)
+
+    # from cProfile import Profile
+    # from pstats import Stats, SortKey
+    # profiler = Profile()
+    # profiler.runcall(main)
+    # stats = Stats(profiler)
+    # stats.strip_dirs()
+    # stats.sort_stats(SortKey.TIME)
+    # stats.print_stats()
