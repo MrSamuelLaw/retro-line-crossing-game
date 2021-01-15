@@ -1,11 +1,12 @@
 #!../.venv/Scripts/python.exe
 from pathlib import PurePath
 from os import chdir
-from pytron import start_game_loop
+from pytron import play_pytron
 
 if __name__ == "__main__":
     chdir(PurePath(__file__).parent)
-    start_game_loop()
+    while play_pytron(number_of_players=2):
+        pass
 
     # from cProfile import Profile
     # from pstats import Stats, SortKey

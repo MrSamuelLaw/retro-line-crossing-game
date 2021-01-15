@@ -1,4 +1,3 @@
-#!.venv/Scripts/python.exe
 # ============================================ #
 # Author: Samuel Law                           #
 # Title: Line Crossing Game                    #
@@ -55,6 +54,11 @@ class Player():
         else:
             return [*self.x_vec, x], [*self.y_vec, y]
 
+    def reset_trace(self):
+        """Clears the trace, used for starting new games"""
+        self.x_vec.clear()
+        self.y_vec.clear()
+
     def turn_right(self):
         """Updates the trace and turns right"""
         self.update_trace()
@@ -65,18 +69,18 @@ class Player():
         self.update_trace()
         self.cursor.left(90)
 
+    def move(self):
+        """Moves the player in the current direction
+        at the desired speed"""
+        self.cursor.forward(self.distance_per_loop)
+
     def update_score(self):
         """Increments the score"""
         self.score += self.distance_per_loop
 
     def update_dist_per_loop(self):
-        """Increments the speed"""
+        """Increments the distance per loop"""
         self.distance_per_loop = self.base_distance*((floor(self.score/1000)*0.5) + 1)
-
-    def move(self):
-        """Moves the player in the current direction
-        at the desired speed"""
-        self.cursor.forward(self.distance_per_loop)
 
     def set_starting_pos(self, x=0, y=0):
         """Moves the player to the desired starting position
@@ -92,10 +96,20 @@ class Game():
     turtle packages Screen object"""
 
     # methods
-    def __init__(self):
-        self.screen = turtle.Screen()
-        self.paused = True
+    def __init__(self, canvas=None):
+        self.screen = turtle.TurtleScreen(cv=canvas) if canvas else turtle.Screen()
         self.player_list = []
+        self.paused = True
+        self.play_again = None
+        self.screen.onkey(self.toggle_pause, 'space')
+        self.screen.onkey(self.play_again_true, 'y')
+        self.screen.onkey(self.play_again_false, 'n')
+
+    def play_again_false(self):
+        self.play_again = False
+
+    def play_again_true(self):
+        self.play_again = True
 
     def add_player(self, player: Player):
         self.player_list.append(player)
@@ -107,8 +121,8 @@ class Game():
         """checks to see if either player is out of bounds"""
         for p in self.player_list:
             x, y = p.get_pos()
-            if any([(abs(x) > (self.screen.window_width()/2)),     # out of bounds width
-                    (abs(y) > (self.screen.window_height()/2))]):  # out of bounds height
+            if any([(abs(x) >= (self.screen.window_width()/2)),     # out of bounds width
+                    (abs(y) >= (self.screen.window_height()/2))]):  # out of bounds height
                 return True
 
     def check_for_intersection(self, x_vec, y_vec, x_last_vec, y_last_vec):
@@ -133,105 +147,106 @@ class Game():
         """Calls the check_for_intersection function on each
         player's last segment using all the lines from all players"""
 
-        # collect the tails and traces
+        # collect indicies & traces
+        indices = [i for i in range(len(self.player_list))]
         traces = [p.get_trace() for p in self.player_list]
-        tails = [(x[-2:], y[-2:]) for x, y in traces]
-        for i, (x_last_vec, y_last_vec) in enumerate(tails):
-            for j, (x_vec, y_vec) in enumerate(traces):
-                try:
-                    cutoff = -3 if i == j else None
-                    if self.check_for_intersection(x_vec[:cutoff], y_vec[:cutoff], x_last_vec, y_last_vec):
+        # loop over the player list by index
+        for i in indices:
+            try:
+                # collect the necessary vectors
+                x_vec, y_vec = traces[i]
+                x_last_vec, y_last_vec = x_vec[-2:], y_vec[-2:]
+                # check tail against own trace
+                if self.check_for_intersection(x_vec[:-3], y_vec[:-3], x_last_vec, y_last_vec):
+                    return True
+                # check tail against other traces
+                for j in [v for v in indices if v != i]:
+                    x_vec, y_vec = traces[j]
+                    if self.check_for_intersection(x_vec, y_vec, x_last_vec, y_last_vec):
                         return True
-                except IndexError:
-                    pass
+            except IndexError:
+                pass
+
+        # # collect the tails and traces
+        # traces = [p.get_trace() for p in self.player_list]
+        # tails = [(x[-2:], y[-2:]) for x, y in traces]
+        # for i, (x_last_vec, y_last_vec) in enumerate(tails):
+        #     for j, (x_vec, y_vec) in enumerate(traces):
+        #         try:
+        #             cutoff = -3 if i == j else None
+        #             if self.check_for_intersection(x_vec[:cutoff], y_vec[:cutoff], x_last_vec, y_last_vec):
+        #                 return True
+        #         except IndexError:
+        #             pass
 
     def save_data(self):
         """Writes out the player's x, y values
         to a csv for debugging purposes"""
-        with open('log.csv', 'w') as f:
-            # write out the header
-            header = [f'player{i+1}_x,player{i+1}_y' for i, _ in enumerate(self.player_list)]
-            f.write(','.join(header))
-            f.write('\n')
-            # collect the player traces
-            traces = [p.get_trace() for p in self.player_list]
-            traces = list(chain(*traces))
-            # write out the player traces
-            [f.write(str(t)[1:-1]+'\n') for t in zip_longest(*traces)]
+        for i, p in enumerate(self.player_list, start=1):
+            with open(f'player{i}_trace.csv', 'w') as f:
+                f.write(f"player{i}_x, player{i}_y")
+                [f.write(f"{x},{y}\n") for x, y in zip(*p.get_trace())]
 
     def game_over(self):
-        self.screen.bgcolor('red')
-        self.save_data()
-        self.screen.exitonclick()
+        # put message on the screen
+        turtle.write(
+            "Play Again? [y/n]",
+            align="center",
+            font=("Arial", 20, "normal")
+        )
+        while self.play_again is None:
+            self.screen.update()
 
+    def setup_players(self):
+        # set the starting positions
+        n = len(self.player_list)
+        w = self.screen.window_width()
+        x = round(float(w/(n+1)), 2)
+        for i, p in enumerate(self.player_list, start=1):
+            p.set_starting_pos(((w/2)-(i*x)), 0)
+            p.cursor.left(90)
+            # set up the key bindings
+            if i == 1:
+                self.screen.onkey(p.turn_right, 'Right')
+                self.screen.onkey(p.turn_left, 'Left')
+            elif i == 2:
+                self.screen.onkey(p.turn_right, 'd')
+                self.screen.onkey(p.turn_left, 'a')
 
-def game_loop():
-    # ================= setup =================
-    # set the title
-    turtle.title("pytron")
-    # create the player(s)
-    player1 = Player()
-    player2 = Player()
-    # create the game objects
-    game = Game()
-    # add the player(s) to the game
-    game.add_player(player1)
-    game.add_player(player2)
-    # set up the plyaer bindings
-    game.screen.onkey(player1.turn_right, 'Right')
-    game.screen.onkey(player1.turn_left, 'Left')
-    game.screen.onkey(player2.turn_right, 'd')
-    game.screen.onkey(player2.turn_left, 'a')
-    game.screen.onkey(game.toggle_pause, 'space')
-    # set the positions
-    # player1.set_starting_pos()
-    player1.set_starting_pos(100, 0)
-    player2.set_starting_pos(-100, 0)
-    player1.cursor.left(90)
-    player2.cursor.left(90)
-    # begin listening
-    game.screen.listen()
-
-    # =============== game loop ===============
-    try:
+    def run_loop(self):
         # start the game
         while True:
-            game.screen.update()
-            if not game.paused:
+            self.screen.update()  # update the screen always
+            if not self.paused:   # update the players if not paused
                 # update player state
-                [p.update_score() for p in game.player_list]
-                [p.update_dist_per_loop() for p in game.player_list]
-                [p.move() for p in game.player_list]
+                [p.update_score() for p in self.player_list]
+                [p.update_dist_per_loop() for p in self.player_list]
+                [p.move() for p in self.player_list]
                 # check to make sure no out of bounds
-                if game.border_collision_detected():
+                if self.border_collision_detected():
                     print('border_collision_detected')
                     break
-                if game.line_intersection_detected():
+                if self.line_intersection_detected():
                     print('line_intersection_detected')
                     break
-        # end the game
-        game.game_over()
-        turtle.mainloop()
-        del game
-    # handle window close
+
+
+def play_pytron(number_of_players=1):
+    try:
+        turtle.Screen().clear()
+        turtle.title('pytron')    # add a title
+        game = Game()             # create a new game object
+
+        for i in range(number_of_players):
+            game.add_player(Player())  # add players
+
+        game.setup_players()  # set up the players
+        game.screen.listen()  # start listening for events
+        game.run_loop()       # start the round
+        game.game_over()      # handles cleanup
+        if game.play_again is False:
+            return False
+        elif game.play_again is True:
+            return True
     except (TclError, turtle.Terminator):
         pass
-
-
-def start_game_loop():
-    while True:
-        game_loop()
-        i = str(input("play again [y, n]\n"))
-        if i.lower() == 'n':
-            break
-        # if play again
-        importlib.reload(turtle)
-
-    # from cProfile import Profile
-    # from pstats import Stats, SortKey
-    # profiler = Profile()
-    # profiler.runcall(main)
-    # stats = Stats(profiler)
-    # stats.strip_dirs()
-    # stats.sort_stats(SortKey.TIME)
-    # stats.print_stats()
