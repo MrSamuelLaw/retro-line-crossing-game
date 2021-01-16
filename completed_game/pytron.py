@@ -9,17 +9,16 @@
 # ============================================ #
 
 import turtle
-import importlib
+from timeit import default_timer as now
 from tkinter import TclError
 from math import floor
-from itertools import zip_longest, chain
 
 
 # ================== classes ==================
 class Player():
     """Class that handles player state and turtle object"""
     # class wide variables
-    base_distance = 2.5
+    base_distance = 0.5
 
     # methods
     def __init__(self, canvas=None):
@@ -60,13 +59,13 @@ class Player():
 
     def turn_right(self):
         """Updates the trace and turns right"""
-        self.update_trace()
         self.cursor.right(90)
+        self.update_trace()
 
     def turn_left(self):
         """Updates the trace and turns left"""
-        self.update_trace()
         self.cursor.left(90)
+        self.update_trace()
 
     def move(self):
         """Moves the player in the current direction
@@ -97,6 +96,7 @@ class Game():
     # methods
     def __init__(self, canvas=None):
         self.screen = turtle.TurtleScreen(cv=canvas) if canvas else turtle.Screen()
+        self.screen.tracer(False)
         self.player_list = []
         self.paused = True
         self.play_again = None
@@ -219,10 +219,10 @@ class Game():
             self.screen.update()  # update the screen always
             if not self.paused:   # update the players if not paused
                 # update player state
-                [p.update_score() for p in self.player_list]
-                [p.update_dist_per_loop() for p in self.player_list]
-                [p.move() for p in self.player_list]
-                # check to make sure no out of bounds
+                [p.update_score() for p in self.player_list]          # update score
+                [p.update_dist_per_loop() for p in self.player_list]  # update dist
+                [p.move() for p in self.player_list]                  # tell everyone to move
+                # check to make sure no out of bounds or intersected
                 if self.border_collision_detected():
                     print('border_collision_detected')
                     break
@@ -234,6 +234,7 @@ class Game():
 def play_pytron(number_of_players=1):
     try:
         turtle.speed(0)           # no animations
+        turtle.delay(0)           # no delays
         turtle.Screen().clear()   # reset screen
         turtle.title('pytron')    # add a title
         game = Game()             # create a new game object
