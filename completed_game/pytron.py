@@ -18,7 +18,7 @@ from math import floor
 class Player():
     """Class that handles player state and turtle object"""
     # class wide variables
-    base_distance = 0.5
+    base_distance = 2.0
 
     # methods
     def __init__(self, canvas=None):
@@ -101,8 +101,6 @@ class Game():
         self.paused = True
         self.play_again = None
         self.screen.onkey(self.toggle_pause, 'space')
-        self.screen.onkey(self.play_again_true, 'y')
-        self.screen.onkey(self.play_again_false, 'n')
 
     def play_again_false(self):
         self.play_again = False
@@ -166,18 +164,6 @@ class Game():
             except IndexError:
                 pass
 
-        # # collect the tails and traces
-        # traces = [p.get_trace() for p in self.player_list]
-        # tails = [(x[-2:], y[-2:]) for x, y in traces]
-        # for i, (x_last_vec, y_last_vec) in enumerate(tails):
-        #     for j, (x_vec, y_vec) in enumerate(traces):
-        #         try:
-        #             cutoff = -3 if i == j else None
-        #             if self.check_for_intersection(x_vec[:cutoff], y_vec[:cutoff], x_last_vec, y_last_vec):
-        #                 return True
-        #         except IndexError:
-        #             pass
-
     def save_data(self):
         """Writes out the player's x, y values
         to a csv for debugging purposes"""
@@ -194,17 +180,24 @@ class Game():
             font=("Arial", 20, "normal")
         )
         turtle.hideturtle()
+        # await user input
+        self.screen.onkey(self.play_again_true, 'y')
+        self.screen.onkey(self.play_again_false, 'n')
         while self.play_again is None:
             self.screen.update()
+        # turn off y/n keys
+        self.screen.onkey(None, 'y')
+        self.screen.onkey(None, 'n')
 
     def setup_players(self):
-        # set the starting positions
-        n = len(self.player_list)
-        w = self.screen.window_width()
-        x = round(float(w/(n+1)), 2)
+        # calculate the starting positions
+        n = len(self.player_list)       # number of players
+        w = self.screen.window_width()  # total screen width
+        x = round(float(w/(n+1)), 2)    # spacing between each player
+        # assign starting position and key bindings
         for i, p in enumerate(self.player_list, start=1):
-            p.set_starting_pos(((w/2)-(i*x)), 0)
-            p.cursor.left(90)
+            p.set_starting_pos(((w/2)-(i*x)), 0)  # set starting position
+            p.cursor.left(90)                     # make them point north
             # set up the key bindings
             if i == 1:
                 self.screen.onkey(p.turn_right, 'Right')
@@ -214,10 +207,13 @@ class Game():
                 self.screen.onkey(p.turn_left, 'a')
 
     def run_loop(self):
-        # start the game
-        while True:
-            self.screen.update()  # update the screen always
-            if not self.paused:   # update the players if not paused
+        start = now()                       # set the time stamp
+        while True:                         # start the game
+            self.screen.update()            # update the screen always
+            while (now() - start) < 0.033:  # maintain approx 40 fps
+                pass
+            start = now()                   # update the time stamp
+            if not self.paused:             # update the players if not paused
                 # update player state
                 [p.update_score() for p in self.player_list]          # update score
                 [p.update_dist_per_loop() for p in self.player_list]  # update dist
