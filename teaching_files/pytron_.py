@@ -1,4 +1,4 @@
-#!../.venv/Scripts/python.exe
+
 
 class Player():
     def __init__(self):

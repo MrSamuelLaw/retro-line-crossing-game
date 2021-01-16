@@ -1,4 +1,4 @@
-#!../.venv/Scripts/python.exe
+#!../.venv/Scripts/pythonw.exe
 from pathlib import PurePath
 from os import chdir
 from pytron import play_pytron

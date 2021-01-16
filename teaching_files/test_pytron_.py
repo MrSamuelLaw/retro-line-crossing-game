@@ -1,10 +1,8 @@
-#!../.venv/Scripts/python.exe
-
 import unittest
 from os import chdir
 from pathlib import PurePath
 from tkinter import Tk, Canvas
-from pytron_1_22_2021 import Player, Game
+from pytron_ import Player, Game
 
 
 class TestPlayer(unittest.TestCase):

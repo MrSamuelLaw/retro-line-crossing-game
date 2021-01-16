@@ -26,7 +26,6 @@ class Player():
         self.score = 0
         self.distance_per_loop = self.base_distance
         self.cursor = turtle.RawTurtle(canvas=canvas) if canvas else turtle.Turtle()
-        self.cursor.speed(10)  # ensure the gui loop updates fast
         self.cursor.degrees()  # set the turtle module to degrees
         self.x_vec, self.y_vec = [], []
 
@@ -194,6 +193,7 @@ class Game():
             align="center",
             font=("Arial", 20, "normal")
         )
+        turtle.hideturtle()
         while self.play_again is None:
             self.screen.update()
 
@@ -233,7 +233,8 @@ class Game():
 
 def play_pytron(number_of_players=1):
     try:
-        turtle.Screen().clear()
+        turtle.speed(0)           # no animations
+        turtle.Screen().clear()   # reset screen
         turtle.title('pytron')    # add a title
         game = Game()             # create a new game object
 
