@@ -22,9 +22,12 @@ class TestPlayer(unittest.TestCase):
     def test_initial_state(self):
         p = self.player
         self.assertEqual(p.score, 0)
-        self.assertEqual(p.distance_per_loop, 2.5)
+        self.assertEqual(p.distance_per_loop, Player.base_distance)
         self.assertEqual(len(p.x_vec), 0)
         self.assertEqual(len(p.y_vec), 0)
+        self.assertIsNone(p.left_btn)
+        self.assertIsNone(p.right_btn)
+        self.assertEqual(p.movable, 1)
 
     def test_get_pos(self):
         """Test that the starting position
@@ -150,116 +153,117 @@ class TestGame(unittest.TestCase):
         screen.window_width.return_value = 100
         screen.window_height = screen.window_width
         # add the player to the game
-        player = self.player
-        self.game.add_player(player)
+        pos = self.player.get_pos
+        self.game.add_player(self.player)
         # ========= + x-direction =========
         # test for non collision
-        player.set_starting_pos(49, 0)
-        self.assertFalse(self.game.border_collision_detected())
+        self.player.set_starting_pos(49, 0)
+        self.assertFalse(self.game.boarder_collision_detected(*pos()))
         # test for "T" shaped collision
-        player.set_starting_pos(50, 0)
-        self.assertTrue(self.game.border_collision_detected())
+        self.player.set_starting_pos(50, 0)
+        self.assertTrue(self.game.boarder_collision_detected(*pos()))
         # test for "+" shaped collision
-        player.set_starting_pos(51, 0)
-        self.assertTrue(self.game.border_collision_detected())
+        self.player.set_starting_pos(51, 0)
+        self.assertTrue(self.game.boarder_collision_detected(*pos()))
         # ========= - x-direction =========
         # test for non collision
-        player.set_starting_pos(-49, 0)
-        self.assertFalse(self.game.border_collision_detected())
+        self.player.set_starting_pos(-49, 0)
+        self.assertFalse(self.game.boarder_collision_detected(*pos()))
         # test for "T" shaped collision
-        player.set_starting_pos(-50, 0)
-        self.assertTrue(self.game.border_collision_detected())
+        self.player.set_starting_pos(-50, 0)
+        self.assertTrue(self.game.boarder_collision_detected(*pos()))
         # test for "+" shaped collision
-        player.set_starting_pos(-51, 0)
-        self.assertTrue(self.game.border_collision_detected())
+        self.player.set_starting_pos(-51, 0)
+        self.assertTrue(self.game.boarder_collision_detected(*pos()))
         # ========= + y-direction =========
         # test for non collision
-        player.set_starting_pos(0, 49)
-        self.assertFalse(self.game.border_collision_detected())
+        self.player.set_starting_pos(0, 49)
+        self.assertFalse(self.game.boarder_collision_detected(*pos()))
         # test for "T" shaped collision
-        player.set_starting_pos(0, 50)
-        self.assertTrue(self.game.border_collision_detected())
+        self.player.set_starting_pos(0, 50)
+        self.assertTrue(self.game.boarder_collision_detected(*pos()))
         # test for "+" shaped collision
-        player.set_starting_pos(0, 51)
-        self.assertTrue(self.game.border_collision_detected())
+        self.player.set_starting_pos(0, 51)
+        self.assertTrue(self.game.boarder_collision_detected(*pos()))
         # ========= - y-direction =========
         # test for non collision
-        player.set_starting_pos(0, -49)
-        self.assertFalse(self.game.border_collision_detected())
+        self.player.set_starting_pos(0, -49)
+        self.assertFalse(self.game.boarder_collision_detected(*pos()))
         # test for "T" shaped collision
-        player.set_starting_pos(0, -50)
-        self.assertTrue(self.game.border_collision_detected())
+        self.player.set_starting_pos(0, -50)
+        self.assertTrue(self.game.boarder_collision_detected(*pos()))
         # test for "+" shaped collision
-        player.set_starting_pos(0, -51)
-        self.assertTrue(self.game.border_collision_detected())
+        self.player.set_starting_pos(0, -51)
+        self.assertTrue(self.game.boarder_collision_detected(*pos()))
 
-    def test_check_for_intersection(self):
+    def test_line_intersection_detected(self):
         # =========== vectors that do not intersect ===========
         x_vec, x_last_vec = [-1, 1], [0, 0]
         y_vec, y_last_vec = [0, 0], [2, 1]
         self.assertFalse(
-            self.game.check_for_intersection(
+            self.game.line_intersection_detected(
                 x_vec, y_vec, x_last_vec, y_last_vec))
         # =========== vectors that intersect at 0, 0 ==========
         x_vec, x_last_vec = [-1, 1], [0, 0]
         y_vec, y_last_vec = [0, 0], [-1, 1]
         self.assertTrue(
-            self.game.check_for_intersection(
+            self.game.line_intersection_detected(
                 x_vec, y_vec, x_last_vec, y_last_vec))
         # =========== first quadrant intersections ==========
         #   "T" shaped intersection
         x_vec, x_last_vec = [0, 1, 1], [1, 2]
         y_vec, y_last_vec = [0, 0, 1], [1, 1]
         self.assertTrue(
-            self.game.check_for_intersection(
+            self.game.line_intersection_detected(
                 x_vec, y_vec, x_last_vec, y_last_vec))
         #   "+" shaped intersection
         x_vec, x_last_vec = [0, 1, 1], [0, 2]
         y_vec, y_last_vec = [0, 0, 1], [1, 1]
         self.assertTrue(
-            self.game.check_for_intersection(
+            self.game.line_intersection_detected(
                 x_vec, y_vec, x_last_vec, y_last_vec))
         # =========== second quadrant intersections ==========
         #   "T" shaped intersection
         x_vec, x_last_vec = [0, -1, -1], [-1, -2]
         y_vec, y_last_vec = [0, 0, 1], [1, 1]
         self.assertTrue(
-            self.game.check_for_intersection(
+            self.game.line_intersection_detected(
                 x_vec, y_vec, x_last_vec, y_last_vec))
         #   "+" shaped intersection
         x_vec, x_last_vec = [0, -1, -1], [0, -2]
         y_vec, y_last_vec = [0, 0, 1], [1, 1]
         self.assertTrue(
-            self.game.check_for_intersection(
+            self.game.line_intersection_detected(
                 x_vec, y_vec, x_last_vec, y_last_vec))
         # =========== third quadrant intersections ===========
         #   "T" shaped intersection
         x_vec, x_last_vec = [0, -1, -1], [-1, -2]
         y_vec, y_last_vec = [0, 0, -1], [-1, -1]
         self.assertTrue(
-            self.game.check_for_intersection(
+            self.game.line_intersection_detected(
                 x_vec, y_vec, x_last_vec, y_last_vec))
         #   "+" shaped intersection
         x_vec, x_last_vec = [0, -1, -1], [0, -2]
         y_vec, y_last_vec = [0, 0, -1], [-1, -1]
         self.assertTrue(
-            self.game.check_for_intersection(
+            self.game.line_intersection_detected(
                 x_vec, y_vec, x_last_vec, y_last_vec))
         # =========== fourth quadrant intersections ===========
         #   "T" shaped intersection
         x_vec, x_last_vec = [0, 1, 1], [1, 2]
         y_vec, y_last_vec = [0, 0, -1], [-1, -1]
         self.assertTrue(
-            self.game.check_for_intersection(
+            self.game.line_intersection_detected(
                 x_vec, y_vec, x_last_vec, y_last_vec))
         #   "+" shaped intersection
         x_vec, x_last_vec = [0, 1, 1], [0, 2]
         y_vec, y_last_vec = [0, 0, -1], [-1, -1]
         self.assertTrue(
-            self.game.check_for_intersection(
+            self.game.line_intersection_detected(
                 x_vec, y_vec, x_last_vec, y_last_vec))
 
-    def test_line_intersection_detected(self):
+    # =========== integration tests ===========
+    def test_check_for_line_intersections(self):
         # ======== short setup ========
         #   create players with mock get_trace methods
         player1, player2 = copy(self.player), copy(self.player)
@@ -270,47 +274,15 @@ class TestGame(unittest.TestCase):
         # ====== no intersection =======
         player1.get_trace.return_value = ([-1, 1], [0, 0])  # x axis trace
         player2.get_trace.return_value = ([0, 0], [1, 2])   # y axis trace
-        self.assertFalse(self.game.line_intersection_detected())
-        # ==== intersection at 0, 0 ====
+        self.game.check_for_line_intersections()
+        self.assertEqual(player1.movable, 1)
+        self.assertEqual(player2.movable, 1)
+        # ==== player 2 runs into player1 ====
         player1.get_trace.return_value = ([-1, 1], [0, 0])  # x axis trace
-        player2.get_trace.return_value = ([0, 0], [-1, 1])  # y axis trace
-        self.assertTrue(self.game.line_intersection_detected())
-        # ======= first quadrant =======
-        #   "T" shaped intersection
-        player1.get_trace.return_value = ([1, 1], [0, 1])  # x axis trace
-        player2.get_trace.return_value = ([0, 2], [1, 1])  # y axis trace
-        self.assertTrue(self.game.line_intersection_detected())
-        #   "+" shaped intersection
-        player1.get_trace.return_value = ([1, 1], [0, 2])  # x axis trace
-        player2.get_trace.return_value = ([0, 2], [1, 1])  # y axis trace
-        self.assertTrue(self.game.line_intersection_detected())
-        # ======= second quadrant ======
-        #   "T" shaped intersection
-        player1.get_trace.return_value = ([-1, -1], [0, 1])  # x axis trace
-        player2.get_trace.return_value = ([0, -2], [1, 1])  # y axis trace
-        self.assertTrue(self.game.line_intersection_detected())
-        #   "+" shaped intersection
-        player1.get_trace.return_value = ([-1, -1], [0, 2])  # x axis trace
-        player2.get_trace.return_value = ([0, -2], [1, 1])  # y axis trace
-        self.assertTrue(self.game.line_intersection_detected())
-        # ======= third quadrant =======
-        #   "T" shaped intersection
-        player1.get_trace.return_value = ([-1, -1], [0, -1])  # x axis trace
-        player2.get_trace.return_value = ([0, -2], [-1, -1])  # y axis trace
-        self.assertTrue(self.game.line_intersection_detected())
-        #   "+" shaped intersection
-        player1.get_trace.return_value = ([-1, -1], [0, -2])  # x axis trace
-        player2.get_trace.return_value = ([0, -2], [-1, -1])  # y axis trace
-        self.assertTrue(self.game.line_intersection_detected())
-         # ======= fourth quadrant ======
-        #   "T" shaped intersection
-        player1.get_trace.return_value = ([1, 1], [0, -1])  # x axis trace
-        player2.get_trace.return_value = ([0, 2], [-1, -1])  # y axis trace
-        self.assertTrue(self.game.line_intersection_detected())
-        #   "+" shaped intersection
-        player1.get_trace.return_value = ([1, 1], [0, -2])  # x axis trace
-        player2.get_trace.return_value = ([0, 2], [-1, -1])  # y axis trace
-        self.assertTrue(self.game.line_intersection_detected())
+        player2.get_trace.return_value = ([0, 0], [-1, 0])  # y axis trace
+        self.game.check_for_line_intersections()
+        self.assertEqual(player1.movable, 1)
+        self.assertEqual(player2.movable, 0)
 
 
 if __name__ == "__main__":
