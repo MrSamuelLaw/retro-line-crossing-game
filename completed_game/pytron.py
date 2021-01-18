@@ -10,7 +10,7 @@
 import turtle
 from timeit import default_timer as now
 from tkinter import TclError
-from math import floor, sqrt
+from math import floor, dist
 
 
 # ================== classes ==================
@@ -153,16 +153,6 @@ class Game():
             ]):
                 return (x_intersection, y_intersection)  # evaluates to true
 
-    def magnitude(self, p1, p2):
-        """Returns the magnitude of the vector between
-        two points p1, and p2. Points are interables
-        in the form of p = [x, y]."""
-        x1, y1, x2, y2 = [*p1, *p2]
-        mag = (x2 - x1)*(x2 - x1)
-        mag += (y2 - y1)*(y2 - y1)
-        mag = sqrt(mag)
-        return mag
-
     def check_for_line_intersections(self):
         """Calls the check_for_intersection function on each
         player's last segment using all the lines from all players"""
@@ -188,10 +178,10 @@ class Game():
                     intersection = self.line_intersection_detected(x_vec, y_vec, x_last_vec, y_last_vec)
                     if intersection:
                         # if player at index[i] is closer to the intersection point, player i should freeze
-                        if self.magnitude(intersection, (x_last_vec[-1], y_last_vec[-1])) < self.magnitude(intersection, (x_vec[-1], y_vec[-1])):
+                        if dist(intersection, (x_last_vec[-1], y_last_vec[-1])) < dist(intersection, (x_vec[-1], y_vec[-1])):
                             self.player_list[i].freeze()
                         # if player at index[j] is closer to the intersection point, player j should freeze
-                        elif self.magnitude(intersection, (x_last_vec[-1], y_last_vec[-1])) > self.magnitude(intersection, (x_vec[-1], y_vec[-1])):
+                        elif dist(intersection, (x_last_vec[-1], y_last_vec[-1])) > dist(intersection, (x_vec[-1], y_vec[-1])):
                             self.player_list[j].freeze()
                         # if player at index[j] & player at index[i] are equidistant from intersection they both freeze
                         else:
