@@ -101,11 +101,14 @@ class Game():
 
     # methods
     def __init__(self, canvas=None):
+        # Game stuff
+        self.player_list = []        # holds the player list
+        self.paused = True           # paused flag
+        self.game_over_limit = None  # allows single and muli player modes
+        self.play_again = None       # flag that enables the y/n selection at end of round
+        # Gui stuff
         self.screen = turtle.TurtleScreen(cv=canvas) if canvas else turtle.Screen()
         self.screen.tracer(False)
-        self.player_list = []
-        self.paused = True
-        self.play_again = None
         self.screen.onkey(self.toggle_pause, 'space')
 
     def play_again_false(self):
@@ -115,7 +118,10 @@ class Game():
         self.play_again = True
 
     def add_player(self, player: Player):
+        """Adds a Player object to the Game player_list
+        and sets the game_over_limit correctly"""
         self.player_list.append(player)
+        self.game_over_limit = 1 % len(self.player_list)
 
     def toggle_pause(self):
         self.paused = not self.paused
@@ -252,7 +258,7 @@ class Game():
                 # check to make sure no out of bounds or intersected
                 self.check_for_border_collisions()
                 self.check_for_line_intersections()
-                if self.num_players_movable() <= 1:
+                if self.num_players_movable() <= self.game_over_limit:
                     break
 
 
