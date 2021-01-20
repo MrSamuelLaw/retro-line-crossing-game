@@ -3,29 +3,26 @@ A game for teaching purposes that shows how to make a game where lines cannot in
 Intended learning outcomes are:
 * Learn to perform basic unit-tests.
 * Learn to use test driven development to build algorithms from scratch.
-* Learn basic object oriented programming concepts. 
+* Learn basic object oriented programming concepts.
 * Apply basic object oriented programming concepts.
 
 Setup:
-1. Open __main__.pyw and create dictionary key bindings in the form of 
+1. Place the files _ _ main _ _.pyw & pytron.py in a folder together.
+2. Open _ _ main _ _.pyw and create dictionary key bindings in the form of
    p1_key_bindings = {"left_btn": <key to turn left>, "right_btn": <key to turn right>}
-2. Put a list key bindings into the play_pytron function call.
+3. Put a list key bindings into the play_pytron function call.
 
    example:
    ```python
    # create key bindings
    p1_key_bindings = {'left_btn': 'Left', 'right_btn': 'Right'}
-   p2_key_bindings = {'left_btn': 'j', 'right_btn': 'l'}
-   p3_key_bindings = {'left_btn': 'a', 'right_btn': 'd'}
-   p4_key_bindings = {'left_btn': '1', 'right_btn': '2'}
+   p2_key_bindings = {'left_btn': 'a', 'right_btn': 'd'}
 
     # play the game
-    while play_pytron([
-        p1_key_bindings, p2_key_bindings,
-        p3_key_bindings, p4_key_bindings,]):
+    while play_pytron([p1_key_bindings, p2_key_bindings]):
         pass
    ```
-   
+
 HOW TO PLAY:
 1. Players will be setup right to left, with the right most player being player 1.
 2. Press the space bar to begin the game, subsiquent presses pause/resume the game.
