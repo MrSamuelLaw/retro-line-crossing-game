@@ -8,12 +8,9 @@ if __name__ == "__main__":
 
     # create key bindings
     p1_key_bindings = {'left_btn': 'Left', 'right_btn': 'Right'}
-    p2_key_bindings = {'left_btn': 'j', 'right_btn': 'l'}
-    p3_key_bindings = {'left_btn': 'a', 'right_btn': 'd'}
-    p4_key_bindings = {'left_btn': '1', 'right_btn': '2'}
+    p2_key_bindings = {'left_btn': 'a', 'right_btn': 'd'}
 
     # play the game
     while play_pytron([
-        p1_key_bindings, p2_key_bindings,
-        p3_key_bindings, p4_key_bindings,]):
+        p1_key_bindings, p2_key_bindings,]):
         pass

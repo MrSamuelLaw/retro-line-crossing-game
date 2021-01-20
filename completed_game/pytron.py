@@ -127,6 +127,8 @@ class Game():
         self.paused = not self.paused
 
     def boarder_collision_detected(self, x, y):
+        """Returns true if the coordinates given by
+        x, y are outside of the screen."""
         if any([(abs(x) >= (self.screen.window_width()/2)),     # out of bounds width
                 (abs(y) >= (self.screen.window_height()/2))]):  # out of bounds height
             return True
@@ -176,16 +178,14 @@ class Game():
                 for j in [v for v in indices if v != i]:
                     x_vec, y_vec = traces[j]
                     intersection = self.line_intersection_detected(x_vec, y_vec, x_last_vec, y_last_vec)
-                    if intersection:
-                        # if player at index[i] is closer to the intersection point, player i should freeze
-                        if dist(intersection, (x_last_vec[-1], y_last_vec[-1])) < dist(intersection, (x_vec[-1], y_vec[-1])):
-                            self.player_list[i].freeze()
-                        # if player at index[j] is closer to the intersection point, player j should freeze
-                        elif dist(intersection, (x_last_vec[-1], y_last_vec[-1])) > dist(intersection, (x_vec[-1], y_vec[-1])):
-                            self.player_list[j].freeze()
-                        # if player at index[j] & player at index[i] are equidistant from intersection they both freeze
+                    if intersection:  # freeze the appropriate player
+                        pi, pj = (x_last_vec[-1], y_last_vec[-1]), (x_vec[-1], y_vec[-1])
+                        if dist(intersection, pi) < dist(intersection, pj):
+                            self.player_list[i].freeze()  # player i closer to intersection point
+                        elif dist(intersection, pi) > dist(intersection, pj):
+                            self.player_list[j].freeze()  # player j closer to intersection point
                         else:
-                            self.player_list[i].freeze()
+                            self.player_list[i].freeze()  # player i & j equidistant from intersection
                             self.player_list[j].freeze()
             except IndexError:
                 pass
@@ -204,6 +204,8 @@ class Game():
                 [f.write(f"{x},{y}\n") for x, y in zip(*p.get_trace())]
 
     def game_over(self):
+        """Handles clean up and puts a play
+        again message after each round."""
         # put message on the screen
         turtle.write(
             "Play Again? [y/n]",
@@ -221,6 +223,9 @@ class Game():
         self.screen.onkey(None, 'n')
 
     def setup_players(self):
+        """Sets the position, orientation and position of each player.
+        Should be called only after all players have been added with
+        Game.add_player."""
         # calculate the starting positions
         n = len(self.player_list)       # number of players
         w = self.screen.window_width()  # total screen width
@@ -245,9 +250,8 @@ class Game():
                 [p.update_score() for p in self.player_list]          # update score
                 [p.update_dist_per_loop() for p in self.player_list]  # update dist
                 [p.move() for p in self.player_list]                  # tell everyone to move
-                # check to make sure no out of bounds or intersected
-                self.check_for_border_collisions()
-                self.check_for_line_intersections()
+                self.check_for_border_collisions()                    # players vs screen
+                self.check_for_line_intersections()                   # players vs players
                 if self.num_players_movable() <= self.game_over_limit:
                     break
 
@@ -260,16 +264,14 @@ def play_pytron(key_bindings):
         turtle.title('pytron')    # add a title
         game = Game()             # create a new game object
 
-        for binding in key_bindings:
-            game.add_player(Player(key_bindings=binding))  # add players
+        for binding in key_bindings:  # add players
+            game.add_player(Player(key_bindings=binding))
 
-        game.setup_players()  # set up the players
-        game.screen.listen()  # start listening for events
-        game.run_loop()       # start the round
-        game.game_over()      # handles cleanup
-        if game.play_again is False:
-            return False
-        elif game.play_again is True:
-            return True
+        game.setup_players()    # set up the players
+        game.screen.listen()    # start listening for events
+        game.run_loop()         # start the round
+        game.game_over()        # handles cleanup
+        game.save_data()        # saves data for debugging
+        return game.play_again  # returns boolean value
     except (TclError, turtle.Terminator):
         pass
